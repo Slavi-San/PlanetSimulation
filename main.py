@@ -18,6 +18,7 @@ LIGHT_GRAY = (200, 200, 200)
 LIGHT_YELLOW = (255, 190, 0)
 LIGHT_BLUE = (170, 170, 240)
 DARK_BLUE = (70, 70, 130)
+DARK_GRAY = (100, 100, 100)
 
 COLOR_NAME = (60, 60, 60)
 
@@ -26,8 +27,8 @@ FONT = pygame.font.SysFont("comicsans", 16)
 class Planet:
 	AU = 149.6e6 * 1000
 	G = 6.67428e-11
-	SCALE = 100 / AU  # 1AU = 100 pixels
-	TIMESTEP = 3600*24*7 # 1 day
+	SCALE = 80 / AU  # 1AU = 100 pixels
+	TIMESTEP = 3600*24 # 1 day
 
 	def __init__(self, name, x, y, radius, color, mass):
 		self.name = name
@@ -48,14 +49,17 @@ class Planet:
 		x = self.x * self.SCALE + WIDTH / 2
 		y = self.y * self.SCALE + HEIGHT / 2
 
+		### DRAWS LINES AFTER PLANET AS TRAJECTORY, KEEP OFF CODE IF U DON'T WANT A MESS
 		# if len(self.orbit) > 2:
 		# 	updated_points = []
+
 		# 	for point in self.orbit:
 		# 		x, y = point
 		# 		x = x * self.SCALE + WIDTH / 2
 		# 		y = y * self.SCALE + HEIGHT / 2
+						
 		# 		updated_points.append((x, y))
-		#
+			
 		# 	pygame.draw.lines(win, self.color, False, updated_points, 2)
 
 		pygame.draw.circle(win, self.color, (x, y), self.radius)
@@ -68,7 +72,9 @@ class Planet:
 		
 		# if not self.sun:
 		# 	distance_text = FONT.render(f"{round(self.distance_to_sun/1000, 1)}km", 1, WHITE)
-		# 	win.blit(distance_text, (x - distance_text.get_width()/2, y - distance_text.get_height()/2))
+		# 	win.blit(distance_text, (x - distance_text.get_width()/2, y + distance_text.get_height()/1.8)) 
+		#
+		### "y +" was "y -" // 1.8 was 2.0
 
 	def attraction(self, other):
 		other_x, other_y = other.x, other.y
@@ -78,7 +84,7 @@ class Planet:
 
 		if other.sun:
 			self.distance_to_sun = distance
-
+		
 		force = self.G * self.mass * other.mass / distance**2
 		theta = math.atan2(distance_y, distance_x)
 		force_x = math.cos(theta) * force
@@ -108,6 +114,10 @@ def main():
 
 	sun = Planet("Sun", 0, 0, 15, YELLOW, 1.98892 * 10**30)
 	sun.sun = True
+
+	# sun_glow = Planet("Sun2", 1, 1, 150, YELLOW, 1.98892 * 10**30)
+	# sun_glow.sun = True
+	# sun_glow.y_vel = 0
 
 	mercury = Planet("Mercury", 0.387 * Planet.AU, 0, 4, DARK_GREY, 3.30 * 10**23)
 	mercury.y_vel = -47.4 * 1000
@@ -139,16 +149,17 @@ def main():
 	planets = [sun, earth, mars, mercury, venus, jupiter, saturn, uranus, neptune]
 
 	class Star:
-		def __init__(self, x, y, color):
+		def __init__(self, x, y, color, radius):
 			self.x = x
 			self.y = y
 			self.color = color
+			self.radius = radius
 
 		def draw(self, win):
 			x = self.x
 			y = self.y
 
-			pygame.draw.circle(win, self.color, (x, y), 1)
+			pygame.draw.circle(win, self.color, (x, y), self.radius)
 
 	stars = []
 	star = []
@@ -156,8 +167,12 @@ def main():
 	for i in range(2200):
 		y = random.randint(5, 2495)
 		x = random.randint(5, 2495)
+		radius = random.randint(1, 3)
 
-		star = Star(x, y, WHITE)
+		if (i % 2) == 0:
+			star = Star(x, y, WHITE, radius)
+		else:
+			star = Star(x, y, DARK_GRAY, radius)
 		stars.append(star)
 
 	# star1 = Star(100, 100, WHITE)
@@ -170,12 +185,12 @@ def main():
 			if event.type == pygame.QUIT:
 				run = False
 
+		for star in stars:
+			star.draw(WIN)
+
 		for planet in planets:
 			planet.update_position(planets)
 			planet.draw(WIN)
-
-		for star in stars:
-			star.draw(WIN)
 
 		pygame.display.update()
 
